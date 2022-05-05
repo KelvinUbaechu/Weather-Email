@@ -1,0 +1,8 @@
+# Ignores virtual environment directory
+.venv/
+
+# Ignores environment variables file
+.env
+
+# Ignores VSCode specific files
+.vscode/
