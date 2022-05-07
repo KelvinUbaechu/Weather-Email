@@ -6,3 +6,7 @@
 
 # Ignores VSCode specific files
 .vscode/
+
+# Google API secrets
+credentials.json
+token.json
