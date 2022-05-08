@@ -26,3 +26,13 @@ def get_forecast_json(zip_code: str) -> dict[str, Any]:
     link = 'http://api.weatherapi.com/v1/forecast.json'
     response = requests.get(link, params=params)
     return response.json()
+
+
+def extract_relevant_forecast_data(forecast_json: dict[str, Any]) -> Forecast:
+    """Extracts only the information that will be used in email"""
+    day = forecast_json['forecast']['forecastday'][0]['day']
+    forecast = {'min_temp': day['mintemp_f'], 'max_temp': day['maxtemp_f'],
+                'total_precip': day['totalprecip_in']}
+    forecast['condition'] = day['condition']['text']
+    forecast['icon_filename'] = day['condition']['icon'].split('/')[-1]
+    return forecast
