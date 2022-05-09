@@ -1,4 +1,8 @@
-import os, requests
+import os, os.path, requests
+from base64 import urlsafe_b64encode
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from dotenv import load_dotenv
 from typing import Any, TypedDict
 
@@ -36,3 +40,30 @@ def extract_relevant_forecast_data(forecast_json: dict[str, Any]) -> Forecast:
     forecast['condition'] = day['condition']['text']
     forecast['icon_filename'] = day['condition']['icon'].split('/')[-1]
     return forecast
+
+
+def construct_email(forecast: Forecast) -> dict[str, bytes]:
+    """Constructs the email using a Forecast and pre-formatted HTML"""
+    message = MIMEMultipart('related')
+    message['to'] = os.getenv('EMAIL_RECEIVER')
+    message['from'] = os.getenv('EMAIL_SENDER')
+    message['subject'] = "Today's Forecast"
+    
+    with open('email_format.html') as f:
+        email_format = f.read().format(
+            high = forecast['max_temp'],
+            low = forecast['min_temp'],
+            total_precip = forecast['total_precip'],
+            condition = forecast['condition']
+        )
+    message.attach(MIMEText(email_format, 'html'))
+
+    icon_filepath = os.path.join('weather_icons', '64x64',
+                                 'day', forecast['icon_filename'])
+    with open(icon_filepath, 'rb') as f:
+        img_data = f.read()
+    img = MIMEImage(img_data, 'png')
+    img.add_header('Content-Id', '<cond_icon>')
+    img.add_header('Content-Disposition', 'inline', filename=forecast['icon_filename'].split('.')[0])
+    message.attach(img)
+    return {'raw': urlsafe_b64encode(message.as_bytes()).decode()}
