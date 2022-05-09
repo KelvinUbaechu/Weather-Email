@@ -7,6 +7,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from dotenv import load_dotenv
 from typing import Any, TypedDict
 
@@ -92,3 +93,15 @@ def get_credentials() -> Credentials | None:
         with open('token.json', 'w') as token:
             token.write(creds.to_json())
     return creds
+
+
+def send_email(message: dict[str, bytes], creds: Credentials) -> bool:
+    try:
+        service = build('gmail', 'v1', credentials=creds)
+        service.users().messages().send(userId='me', body=message).execute()
+    except HttpError:
+        return False
+    else:
+        return True
+    finally:
+        service.close()
