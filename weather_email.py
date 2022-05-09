@@ -105,3 +105,19 @@ def send_email(message: dict[str, bytes], creds: Credentials) -> bool:
         return True
     finally:
         service.close()
+
+
+def main() -> None:
+    creds = get_credentials()
+    forecast_json = get_forecast_json(os.getenv('ZIP_CODE'))
+    forecast = extract_relevant_forecast_data(forecast_json)
+    message = construct_email(forecast)
+    has_sent_email = send_email(message, creds)
+    if has_sent_email:
+        print('Email successfully sent!')
+    else:
+        print('Email failed to send')
+
+
+if __name__ == '__main__':
+    main()
