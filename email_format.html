@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecast Email</title>
+</head>
+    <body>
+        <h2>Here is the forecast for today</h2>
+        <table>  <!--Would like use to CSS and JavaScript instead in the future-->
+            <tr>
+                <td>{high}F</td>
+                <td colspan="2" rowspan="3"><img src="cid:cond_icon" alt="Icon representing weather condition for today"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>{total_precip} inch(es)</td>
+            </tr>
+            <tr>
+                <td>{low}F</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td colspan="2">{condition}</td>
+                <td></td>
+            </tr>
+        </table>
+    </body>
+</html>
