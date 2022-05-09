@@ -10,3 +10,6 @@
 # Google API secrets
 credentials.json
 token.json
+
+# Miscellaneous
+*.db
