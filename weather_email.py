@@ -1,5 +1,6 @@
 import os, os.path, requests
 from base64 import urlsafe_b64encode
+from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -47,7 +48,7 @@ def extract_relevant_forecast_data(forecast_json: dict[str, Any]) -> Forecast:
     return forecast
 
 
-def construct_email(forecast: Forecast) -> dict[str, bytes]:
+def construct_email(forecast: Forecast) -> MIMEBase:
     """Constructs the email using a Forecast and pre-formatted HTML"""
     message = MIMEMultipart('related')
     message['to'] = os.getenv('EMAIL_RECEIVER')
@@ -71,7 +72,7 @@ def construct_email(forecast: Forecast) -> dict[str, bytes]:
     img.add_header('Content-Id', '<cond_icon>')
     img.add_header('Content-Disposition', 'inline', filename=forecast['icon_filename'].split('.')[0])
     message.attach(img)
-    return {'raw': urlsafe_b64encode(message.as_bytes()).decode()}
+    return message
 
 def get_credentials() -> Credentials | None:
     scopes = ['https://www.googleapis.com/auth/gmail.modify']
@@ -95,10 +96,11 @@ def get_credentials() -> Credentials | None:
     return creds
 
 
-def send_email(message: dict[str, bytes], creds: Credentials) -> bool:
+def send_email(message: MIMEBase, creds: Credentials) -> bool:
+    body = {'raw': urlsafe_b64encode(message.as_bytes()).decode()}
     try:
         service = build('gmail', 'v1', credentials=creds)
-        service.users().messages().send(userId='me', body=message).execute()
+        service.users().messages().send(userId='me', body=body).execute()
     except HttpError:
         return False
     else:
