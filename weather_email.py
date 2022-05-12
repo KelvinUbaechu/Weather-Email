@@ -11,7 +11,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from dotenv import load_dotenv
-from typing import Any
+from typing import Any, Dict, Optional
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +28,7 @@ class Forecast:
     icon_filename: str
 
 
-def get_forecast_json(zip_code: str) -> dict[str, Any]:
+def get_forecast_json(zip_code: str) -> Dict[str, Any]:
     """Returns the forecast data for the specified zip code
     
     Currently, there are no checks to determine whether the zip code
@@ -50,7 +50,7 @@ def get_filepath_for_icon(weather_api_image_link: str) -> str:
     return icon_filepath
 
 
-def extract_relevant_forecast_data(forecast_json: dict[str, Any]) -> Forecast:
+def extract_relevant_forecast_data(forecast_json: Dict[str, Any]) -> Forecast:
     """Extracts only the information that will be used in email"""
     day = forecast_json['forecast']['forecastday'][0]['day']
     forecast = Forecast(
@@ -88,7 +88,7 @@ def construct_email(forecast: Forecast) -> MIMEBase:
     message.attach(img)
     return message
 
-def get_credentials() -> Credentials | None:
+def get_credentials() -> Optional[Credentials]:
     scopes = ['https://www.googleapis.com/auth/gmail.modify']
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
