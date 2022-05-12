@@ -38,13 +38,23 @@ def get_forecast_json(zip_code: str) -> dict[str, Any]:
     return response.json()
 
 
+def get_filepath_for_icon(weather_api_image_link: str) -> str:
+    """Returns the file path for the icon corresponding to the icon provided
+    by the WeatherAPI response"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    filename = weather_api_image_link.split('/')[-1]
+    icon_filepath = os.path.join(script_dir, 'weather_icons', '64x64',
+                            'day', filename)
+    return icon_filepath
+
+
 def extract_relevant_forecast_data(forecast_json: dict[str, Any]) -> Forecast:
     """Extracts only the information that will be used in email"""
     day = forecast_json['forecast']['forecastday'][0]['day']
     forecast = {'min_temp': day['mintemp_f'], 'max_temp': day['maxtemp_f'],
                 'total_precip': day['totalprecip_in']}
     forecast['condition'] = day['condition']['text']
-    forecast['icon_filename'] = day['condition']['icon'].split('/')[-1]
+    forecast['icon_filename'] = get_filepath_for_icon(day['condition']['icon'])
     return forecast
 
 
@@ -64,13 +74,12 @@ def construct_email(forecast: Forecast) -> MIMEBase:
         )
     message.attach(MIMEText(email_format, 'html'))
 
-    icon_filepath = os.path.join('weather_icons', '64x64',
-                                 'day', forecast['icon_filename'])
+    icon_filepath = forecast['icon_filename']
     with open(icon_filepath, 'rb') as f:
         img_data = f.read()
-    img = MIMEImage(img_data, 'png')
+    img = MIMEImage(img_data)
     img.add_header('Content-Id', '<cond_icon>')
-    img.add_header('Content-Disposition', 'inline', filename=forecast['icon_filename'].split('.')[0])
+    img.add_header('Content-Disposition', 'inline', filename=os.path.basename(forecast['icon_filename']).split('.')[0])
     message.attach(img)
     return message
 
