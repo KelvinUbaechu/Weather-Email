@@ -13,7 +13,8 @@ from dotenv import load_dotenv
 from typing import Any, TypedDict
 
 
-load_dotenv()
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(SCRIPT_DIR, '.env'))
 
 
 class Forecast(TypedDict):
@@ -41,9 +42,8 @@ def get_forecast_json(zip_code: str) -> dict[str, Any]:
 def get_filepath_for_icon(weather_api_image_link: str) -> str:
     """Returns the file path for the icon corresponding to the icon provided
     by the WeatherAPI response"""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
     filename = weather_api_image_link.split('/')[-1]
-    icon_filepath = os.path.join(script_dir, 'weather_icons', '64x64',
+    icon_filepath = os.path.join(SCRIPT_DIR, 'weather_icons', '64x64',
                             'day', filename)
     return icon_filepath
 
@@ -89,18 +89,20 @@ def get_credentials() -> Credentials | None:
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', scopes)
+    token_path = os.path.join(SCRIPT_DIR, 'token.json')
+    creds_path = os.path.join(SCRIPT_DIR, 'credentials.json')
+    if os.path.exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path, scopes)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', scopes)
+                creds_path, scopes)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('token.json', 'w') as token:
+        with open(token_path, 'w') as token:
             token.write(creds.to_json())
     return creds
 
