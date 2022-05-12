@@ -1,5 +1,6 @@
 import os, os.path, requests
 from base64 import urlsafe_b64encode
+from dataclasses import dataclass
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
@@ -10,14 +11,15 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from dotenv import load_dotenv
-from typing import Any, TypedDict
+from typing import Any
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(SCRIPT_DIR, '.env'))
 
 
-class Forecast(TypedDict):
+@dataclass
+class Forecast:
     """Represents the minimum weather info to be displayed in email"""
     min_temp: float
     max_temp: float
@@ -51,10 +53,13 @@ def get_filepath_for_icon(weather_api_image_link: str) -> str:
 def extract_relevant_forecast_data(forecast_json: dict[str, Any]) -> Forecast:
     """Extracts only the information that will be used in email"""
     day = forecast_json['forecast']['forecastday'][0]['day']
-    forecast = {'min_temp': day['mintemp_f'], 'max_temp': day['maxtemp_f'],
-                'total_precip': day['totalprecip_in']}
-    forecast['condition'] = day['condition']['text']
-    forecast['icon_filename'] = get_filepath_for_icon(day['condition']['icon'])
+    forecast = Forecast(
+        min_temp=day['mintemp_f'],
+        max_temp=day['maxtemp_f'],
+        total_precip=day['totalprecip_in'],
+        condition=day['condition']['text'],
+        icon_filename=get_filepath_for_icon(day['condition']['icon'])
+    )
     return forecast
 
 
@@ -67,19 +72,19 @@ def construct_email(forecast: Forecast) -> MIMEBase:
     
     with open('email_format.html') as f:
         email_format = f.read().format(
-            high = forecast['max_temp'],
-            low = forecast['min_temp'],
-            total_precip = forecast['total_precip'],
-            condition = forecast['condition']
+            high = forecast.max_temp,
+            low = forecast.min_temp,
+            total_precip = forecast.total_precip,
+            condition = forecast.condition
         )
     message.attach(MIMEText(email_format, 'html'))
 
-    icon_filepath = forecast['icon_filename']
+    icon_filepath = forecast.icon_filename
     with open(icon_filepath, 'rb') as f:
         img_data = f.read()
     img = MIMEImage(img_data)
     img.add_header('Content-Id', '<cond_icon>')
-    img.add_header('Content-Disposition', 'inline', filename=os.path.basename(forecast['icon_filename']).split('.')[0])
+    img.add_header('Content-Disposition', 'inline', filename=os.path.basename(forecast.icon_filename).split('.')[0])
     message.attach(img)
     return message
 
