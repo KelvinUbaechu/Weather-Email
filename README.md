@@ -1,2 +1,2 @@
 # Weather-Email
-A script that emails me the forecast everyday
+A script that emails me today's forecast
