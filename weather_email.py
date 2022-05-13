@@ -70,7 +70,7 @@ def construct_email(forecast: Forecast) -> MIMEBase:
     message['from'] = os.getenv('EMAIL_SENDER')
     message['subject'] = "Today's Forecast"
     
-    with open('email_format.html') as f:
+    with open(os.path.join(SCRIPT_DIR, 'email_format.html')) as f:
         email_format = f.read().format(
             high = forecast.max_temp,
             low = forecast.min_temp,
